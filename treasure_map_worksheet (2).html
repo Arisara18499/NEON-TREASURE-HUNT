@@ -99,7 +99,6 @@
             box-shadow: 0 0 20px rgba(0, 245, 255, 0.5);
         }
 
-        /* เพิ่มสไตล์ input สำหรับเพชรเริ่มต้น */
         .diamonds-input {
             width: 100px;
             margin-left: 5px;
@@ -193,16 +192,16 @@
             box-shadow: 0 0 25px rgba(131, 56, 236, 0.6);
         }
 
-        .treasure-card.answered-wrong {
-            background: linear-gradient(45deg, #ff004022, #ff660022);
-            border-color: #ff0040;
-        }
-
-        .treasure-card.completed {
+        .treasure-card.correct {
             background: linear-gradient(45deg, #00ff0022, #00f5ff22);
             border-color: #00ff00;
-            opacity: 0.6;
-            pointer-events: none;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .treasure-card.wrong {
+            background: linear-gradient(45deg, #ff004022, #ff006e22);
+            border-color: #ff0040;
         }
 
         .card-number {
@@ -280,6 +279,23 @@
             text-shadow: 0 0 10px #ff0040;
         }
 
+        .reset-btn {
+            background: linear-gradient(45deg, #ff006e, #8338ec);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .reset-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+        }
+
         .leaderboard {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
@@ -335,7 +351,6 @@
             }
         }
 
-        /* เพิ่มสไตล์สำหรับ Timer */
         .timer-container {
             position: absolute;
             top: 20px;
@@ -478,22 +493,6 @@
             color: #fff;
         }
 
-        /* สไตล์สำหรับแสดงสถานะคำถาม */
-        .card-status {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            font-size: 1.2rem;
-        }
-
-        .card-status.correct {
-            color: #00ff00;
-        }
-
-        .card-status.wrong {
-            color: #ff0040;
-        }
-
         @media (max-width: 1024px) {
             .teams-grid {
                 grid-template-columns: repeat(4, 1fr);
@@ -556,6 +555,7 @@
                 <input type="text" id="teamNameInput" class="team-input" placeholder="Enter team name..." maxlength="20">
                 <input type="number" id="startingDiamondsInput" class="team-input diamonds-input" placeholder="Diamonds" min="-999" max="999" value="0">
                 <button class="add-team-btn" onclick="addTeam()">Add Team</button>
+                <button class="reset-btn" onclick="resetGame()">Reset Game</button>
             </div>
             <div class="teams-grid" id="teamsGrid"></div>
         </div>
@@ -600,7 +600,7 @@
         // Game state
         let teams = [];
         let currentTeamIndex = 0;
-        let answeredQuestions = []; // เก็บสถานะคำถาม: { index, status: 'correct'|'wrong' }
+        let cardStates = {}; // เก็บสถานะของแต่ละการ์ด: 'correct', 'wrong', หรือ undefined
         let gameRound = 1;
         let currentQuestionIndex = -1;
         
@@ -749,7 +749,7 @@
             }
         ];
 
-        // Add team function - แก้ไขให้รวมเพชรเริ่มต้น
+        // Add team function
         function addTeam() {
             const nameInput = document.getElementById('teamNameInput');
             const diamondsInput = document.getElementById('startingDiamondsInput');
@@ -771,7 +771,6 @@
                 return;
             }
 
-            // เพิ่ม validation สำหรับเพชรเริ่มต้น (อนุญาตให้ติดลบได้)
             if (startingDiamonds < -999 || startingDiamonds > 999) {
                 showMessage('Starting diamonds must be between -999 to 999!', 'error');
                 return;
@@ -804,11 +803,9 @@
                 const teamBtn = document.createElement('div');
                 teamBtn.className = `team-btn ${index === currentTeamIndex ? 'selected' : ''}`;
                 teamBtn.onclick = () => selectTeam(index);
-                
-                const diamondClass = team.diamonds < 0 ? 'negative' : '';
                 teamBtn.innerHTML = `
                     <div class="team-name">${team.name}</div>
-                    <div class="team-diamonds ${diamondClass}">💎 ${team.diamonds}</div>
+                    <div class="team-diamonds ${team.diamonds < 0 ? 'negative' : ''}">💎 ${team.diamonds}</div>
                 `;
                 teamsGrid.appendChild(teamBtn);
             });
@@ -835,29 +832,19 @@
             gameBoard.innerHTML = '';
             
             questions.forEach((q, index) => {
-                const answeredQuestion = answeredQuestions.find(aq => aq.index === index);
-                
-                // ถ้าตอบถูกแล้วให้ซ่อนคำถาม
-                if (answeredQuestion && answeredQuestion.status === 'correct') {
-                    return; // ไม่แสดงคำถามที่ตอบถูกแล้ว
-                }
-                
                 const card = document.createElement('div');
                 let cardClass = 'treasure-card';
-                let statusIcon = '';
                 
-                if (answeredQuestion) {
-                    if (answeredQuestion.status === 'wrong') {
-                        cardClass += ' answered-wrong';
-                        statusIcon = '<div class="card-status wrong">❌</div>';
-                    }
+                if (cardStates[index] === 'correct') {
+                    cardClass += ' correct';
+                } else if (cardStates[index] === 'wrong') {
+                    cardClass += ' wrong';
                 }
                 
                 card.className = cardClass;
                 card.onclick = () => openQuestion(index);
                 card.innerHTML = `
                     <div class="card-number">${index + 1}</div>
-                    ${statusIcon}
                     <div class="card-topic">${q.topic}</div>
                     <div class="card-icon">${q.icon}</div>
                 `;
@@ -876,13 +863,12 @@
                 if (timeLeft > 0) {
                     timeLeft--;
                     if (timeLeft <= 5 && timeLeft > 0) {
-                        createTickSound(); // เสียงเอฟเฟกต์ 5 วิสุดท้าย
+                        createTickSound();
                     }
                 } else {
-                    // เข้าสู่ Overtime
                     isOvertime = true;
                     overtimeSeconds++;
-                    createOvertimeSound(); // เสียงเอฟเฟกต์เมื่อเกินเวลา
+                    createOvertimeSound();
                 }
                 updateTimerDisplay();
             }, 1000);
@@ -897,189 +883,139 @@
 
         function updateTimerDisplay() {
             const timerDisplay = document.getElementById('timerDisplay');
-            const timerContainer = document.querySelector('.timer-container');
             
-            if (isOvertime) {
-                timerDisplay.textContent = `+${overtimeSeconds}`;
-                timerContainer.className = 'timer-container timer-overtime';
-            } else if (timeLeft <= 5) {
+            if (!isOvertime) {
                 timerDisplay.textContent = timeLeft;
-                timerContainer.className = 'timer-container timer-danger';
+                if (timeLeft <= 5) {
+                    timerDisplay.className = 'timer-container timer-danger';
+                } else {
+                    timerDisplay.className = 'timer-container';
+                }
             } else {
-                timerDisplay.textContent = timeLeft;
-                timerContainer.className = 'timer-container';
+                timerDisplay.textContent = `+${overtimeSeconds}`;
+                timerDisplay.className = 'timer-container timer-overtime';
             }
         }
 
-        function openQuestion(index) {
+        function openQuestion(questionIndex) {
             if (teams.length === 0) {
-                showMessage('Please create teams first!', 'error');
+                showMessage('Please create at least one team first!', 'error');
                 return;
             }
 
-            const answeredQuestion = answeredQuestions.find(aq => aq.index === index);
-            if (answeredQuestion && answeredQuestion.status === 'correct') {
-                showMessage('This question has already been answered correctly!', 'error');
+            // คำถามที่ตอบถูกแล้วจะไม่สามารถเลือกได้
+            if (cardStates[questionIndex] === 'correct') {
+                showMessage('This question has been answered correctly!', 'error');
                 return;
             }
 
-            currentQuestionIndex = index;
-            const question = questions[index];
-            
+            currentQuestionIndex = questionIndex;
+            const question = questions[questionIndex];
             document.getElementById('questionText').textContent = question.question;
             
-            const optionsContainer = document.getElementById('answerOptions');
-            optionsContainer.innerHTML = '';
+            const answerOptions = document.getElementById('answerOptions');
+            answerOptions.innerHTML = '';
             
-            question.options.forEach((option, optionIndex) => {
+            question.options.forEach((option, index) => {
                 const button = document.createElement('button');
                 button.className = 'answer-option';
                 button.textContent = option;
-                button.onclick = () => selectAnswer(optionIndex);
-                optionsContainer.appendChild(button);
+                button.onclick = () => selectAnswer(index);
+                answerOptions.appendChild(button);
             });
             
             document.getElementById('questionModal').style.display = 'block';
             startTimer();
         }
 
-        function selectAnswer(selectedIndex) {
+        function selectAnswer(answerIndex) {
             stopTimer();
-            
             const question = questions[currentQuestionIndex];
-            const isCorrect = selectedIndex === question.correct;
+            const isCorrect = answerIndex === question.correct;
             
-            // Calculate points based on time
-            let points = 0;
-            if (isCorrect) {
-                if (timeLeft >= 10) {
-                    points = 10; // Full points for quick answers
-                } else if (timeLeft >= 5) {
-                    points = 7; // Good points
-                } else if (timeLeft > 0) {
-                    points = 5; // Basic points
-                } else {
-                    // Overtime penalty
-                    points = Math.max(1, 5 - overtimeSeconds); // Minimum 1 point
-                }
-            } else {
-                points = -3; // Penalty for wrong answers
-            }
+            // Update card state
+            cardStates[currentQuestionIndex] = isCorrect ? 'correct' : 'wrong';
             
             // Update team diamonds
-            teams[currentTeamIndex].diamonds += points;
-            
-            // Record the answer
-            const existingAnswer = answeredQuestions.find(aq => aq.index === currentQuestionIndex);
-            if (existingAnswer) {
-                existingAnswer.status = isCorrect ? 'correct' : 'wrong';
+            if (isCorrect) {
+                teams[currentTeamIndex].diamonds += 5;
+                showResult('CORRECT! 🎉', `+5 diamonds earned!`, true);
             } else {
-                answeredQuestions.push({
-                    index: currentQuestionIndex,
-                    status: isCorrect ? 'correct' : 'wrong'
-                });
+                teams[currentTeamIndex].diamonds -= 3;
+                showResult('WRONG! ❌', `-3 diamonds lost!`, false);
             }
             
-            closeModal();
-            showResult(isCorrect, points);
-            
-            // Update displays
             updateTeamsDisplay();
             updateLeaderboard();
-            createGameBoard(); // Refresh board to hide correctly answered questions
+            createGameBoard();
+            closeModal();
             
             // Move to next team
-            setTimeout(() => {
-                nextTeam();
-            }, 3000);
+            nextTurn();
         }
 
-        function showResult(isCorrect, points) {
+        function showResult(resultText, details, isCorrect) {
             const resultModal = document.getElementById('resultModal');
-            const resultText = document.getElementById('resultText');
-            const resultDetails = document.getElementById('resultDetails');
             const resultContent = document.getElementById('resultContent');
+            const resultTextElement = document.getElementById('resultText');
+            const resultDetailsElement = document.getElementById('resultDetails');
+            
+            resultTextElement.textContent = resultText;
+            resultDetailsElement.textContent = details;
             
             if (isCorrect) {
-                resultText.textContent = '🎉 CORRECT! 🎉';
                 resultContent.className = 'result-content result-correct';
-                resultDetails.innerHTML = `
-                    <div>Team: ${teams[currentTeamIndex].name}</div>
-                    <div>Points Earned: +${points} 💎</div>
-                    <div>New Total: ${teams[currentTeamIndex].diamonds} 💎</div>
-                `;
             } else {
-                resultText.textContent = '❌ WRONG! ❌';
                 resultContent.className = 'result-content result-wrong';
-                resultDetails.innerHTML = `
-                    <div>Team: ${teams[currentTeamIndex].name}</div>
-                    <div>Points Lost: ${points} 💎</div>
-                    <div>New Total: ${teams[currentTeamIndex].diamonds} 💎</div>
-                `;
             }
             
             resultModal.style.display = 'block';
             
             setTimeout(() => {
                 resultModal.style.display = 'none';
-            }, 3000);
-        }
-
-        function nextTeam() {
-            if (teams.length === 0) return;
-            
-            currentTeamIndex = (currentTeamIndex + 1) % teams.length;
-            
-            // Check if all teams have played in this round
-            if (currentTeamIndex === 0) {
-                gameRound++;
-                document.getElementById('roundCounter').textContent = gameRound;
-                
-                // Check if game should end
-                const remainingQuestions = questions.filter((_, index) => {
-                    const answered = answeredQuestions.find(aq => aq.index === index);
-                    return !answered || answered.status !== 'correct';
-                }).length;
-                
-                if (remainingQuestions === 0) {
-                    showMessage('🎉 Game Over! All treasures found! 🎉', 'success');
-                    return;
-                }
-            }
-            
-            updateTeamsDisplay();
-            updateCurrentTeamDisplay();
-            showMessage(`${teams[currentTeamIndex].name}'s turn!`, 'success');
+            }, 2000);
         }
 
         function closeModal() {
-            stopTimer();
             document.getElementById('questionModal').style.display = 'none';
+            stopTimer();
         }
 
-        function showMessage(message, type = '') {
+        function nextTurn() {
+            currentTeamIndex = (currentTeamIndex + 1) % teams.length;
+            updateCurrentTeamDisplay();
+            updateTeamsDisplay();
+            
+            // Check if all questions are answered correctly
+            const correctAnswers = Object.values(cardStates).filter(state => state === 'correct').length;
+            if (correctAnswers === questions.length) {
+                gameRound++;
+                document.getElementById('roundCounter').textContent = gameRound;
+                cardStates = {}; // Reset card states for new round
+                createGameBoard();
+                showMessage('🎊 All treasures found! New round started! 🎊', 'success');
+            }
+        }
+
+        function showMessage(message, type) {
             const messageElement = document.getElementById('gameMessage');
             messageElement.textContent = message;
             messageElement.className = `message ${type}`;
+            
+            setTimeout(() => {
+                messageElement.textContent = 'Choose a treasure to explore!';
+                messageElement.className = 'message';
+            }, 3000);
         }
 
         function updateLeaderboard() {
-            const leaderboardList = document.getElementById('leaderboardList');
-            
-            // Sort teams by diamonds (descending)
+            const leaderboard = document.getElementById('leaderboardList');
             const sortedTeams = [...teams].sort((a, b) => b.diamonds - a.diamonds);
             
-            leaderboardList.innerHTML = '';
+            leaderboard.innerHTML = '';
             sortedTeams.forEach((team, index) => {
-                const position = index + 1;
-                let medal = '';
-                if (position === 1) medal = '🥇';
-                else if (position === 2) medal = '🥈';
-                else if (position === 3) medal = '🥉';
-                
-                const diamondClass = team.diamonds < 0 ? 'negative' : '';
-                const teamElement = document.createElement('div');
-                teamElement.style.cssText = `
+                const rank = document.createElement('div');
+                rank.style.cssText = `
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
@@ -1087,15 +1023,34 @@
                     margin: 5px 0;
                     background: rgba(255, 255, 255, 0.1);
                     border-radius: 8px;
-                    border-left: 3px solid ${position <= 3 ? '#ff006e' : '#8338ec'};
+                    border-left: 4px solid ${index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : '#8338ec'};
                 `;
                 
-                teamElement.innerHTML = `
-                    <span>${medal} ${position}. ${team.name}</span>
-                    <span class="team-diamonds ${diamondClass}">💎 ${team.diamonds}</span>
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏴‍☠️';
+                rank.innerHTML = `
+                    <span>${medal} ${index + 1}. ${team.name}</span>
+                    <span style="color: ${team.diamonds < 0 ? '#ff0040' : '#00f5ff'}; font-weight: bold;">💎 ${team.diamonds}</span>
                 `;
-                leaderboardList.appendChild(teamElement);
+                leaderboard.appendChild(rank);
             });
+        }
+
+        function resetGame() {
+            if (confirm('Are you sure you want to reset the entire game? This will delete all teams and progress.')) {
+                teams = [];
+                currentTeamIndex = 0;
+                cardStates = {};
+                gameRound = 1;
+                
+                document.getElementById('roundCounter').textContent = '1';
+                updateTeamsDisplay();
+                updateCurrentTeamDisplay();
+                updateLeaderboard();
+                createGameBoard();
+                showMessage('Game reset! Create new teams to start playing.', 'success');
+                stopTimer();
+                closeModal();
+            }
         }
 
         // Event listeners
@@ -1113,9 +1068,9 @@
 
         // Close modal when clicking outside
         window.onclick = function(event) {
-            const questionModal = document.getElementById('questionModal');
+            const modal = document.getElementById('questionModal');
             const resultModal = document.getElementById('resultModal');
-            if (event.target === questionModal) {
+            if (event.target === modal) {
                 closeModal();
             }
             if (event.target === resultModal) {
@@ -1125,6 +1080,8 @@
 
         // Initialize game
         document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentTeamDisplay();
+            createGameBoard();
             updateLeaderboard();
         });
     </script>
