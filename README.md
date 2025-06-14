@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Treasure Hunt Game</title>
+    <title>Treasure Hunt Game</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e);
@@ -78,7 +77,6 @@
             margin-bottom: 15px;
             align-items: center;
             justify-content: center;
-            flex-wrap: wrap;
         }
 
         .team-input {
@@ -89,7 +87,7 @@
             color: #fff;
             font-size: 1rem;
             outline: none;
-            width: 150px;
+            width: 200px;
         }
 
         .team-input::placeholder {
@@ -101,8 +99,10 @@
             box-shadow: 0 0 20px rgba(0, 245, 255, 0.5);
         }
 
+        /* เพิ่มสไตล์ input สำหรับเพชรเริ่มต้น */
         .diamonds-input {
             width: 100px;
+            margin-left: 5px;
         }
 
         .add-team-btn {
@@ -286,43 +286,6 @@
             font-size: 1.3rem;
         }
 
-        /* Timer Styles */
-        .timer-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 3px solid #ff006e;
-            border-radius: 15px;
-            padding: 15px;
-            text-align: center;
-            min-width: 120px;
-        }
-
-        .timer-display {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #00f5ff;
-            text-shadow: 0 0 15px #00f5ff;
-            margin-bottom: 5px;
-        }
-
-        .timer-display.warning {
-            color: #ff0040;
-            text-shadow: 0 0 15px #ff0040;
-            animation: timerWarning 0.5s ease-in-out infinite alternate;
-        }
-
-        @keyframes timerWarning {
-            from { transform: scale(1); }
-            to { transform: scale(1.1); }
-        }
-
-        .timer-text {
-            font-size: 0.9rem;
-            color: #fff;
-        }
-
         /* Modal Styles */
         .modal {
             display: none;
@@ -359,6 +322,44 @@
                 transform: translateY(0);
                 opacity: 1;
             }
+        }
+
+        /* เพิ่มสไตล์สำหรับ Timer */
+        .timer-container {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #ff006e;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00f5ff;
+            text-shadow: 0 0 10px #00f5ff;
+        }
+
+        .timer-danger {
+            border-color: #ff0040 !important;
+            color: #ff0040 !important;
+            text-shadow: 0 0 15px #ff0040 !important;
+            animation: timerBlink 0.5s infinite alternate;
+        }
+
+        .timer-overtime {
+            border-color: #ff6600 !important;
+            color: #ff6600 !important;
+            text-shadow: 0 0 15px #ff6600 !important;
+            animation: timerBlink 0.3s infinite alternate;
+        }
+
+        @keyframes timerBlink {
+            from { opacity: 1; }
+            to { opacity: 0.5; }
         }
 
         .question-text {
@@ -454,11 +455,6 @@
             background: radial-gradient(circle, rgba(255, 0, 64, 0.2) 0%, transparent 70%);
         }
 
-        .result-timeout {
-            color: #ff8800;
-            background: radial-gradient(circle, rgba(255, 136, 0, 0.2) 0%, transparent 70%);
-        }
-
         @keyframes resultPulse {
             0% { transform: scale(0.5); opacity: 0; }
             50% { transform: scale(1.2); }
@@ -477,10 +473,6 @@
             }
             .game-board {
                 grid-template-columns: repeat(2, 1fr);
-            }
-            .timer-container {
-                position: relative;
-                margin-bottom: 15px;
             }
         }
 
@@ -514,6 +506,11 @@
             .result-content {
                 min-width: 300px;
             }
+            .timer-container {
+                width: 60px;
+                height: 60px;
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
@@ -522,51 +519,43 @@
     
     <div class="container">
         <div class="header">
-            <h1 class="title">💎 NEON TREASURE HUNT 💎</h1>
-            <p class="subtitle">Reading Comprehension Adventure Game</p>
+            <h1 class="title">🏴‍☠️ TREASURE HUNT GAME 🏴‍☠️</h1>
+            <p class="subtitle">Adventure Awaits Those Who Dare!</p>
         </div>
 
         <div class="team-selection">
-            <h3 style="text-align: center; margin-bottom: 15px; color: #00f5ff; text-shadow: 0 0 10px #00f5ff;">Create & Select Teams</h3>
+            <h3 style="text-align: center; margin-bottom: 15px; color: #00f5ff;">⚔️ Create Your Teams ⚔️</h3>
             <div class="team-input-section">
-                <input type="text" class="team-input" id="teamNameInput" placeholder="Team name..." maxlength="20">
-                <input type="number" class="team-input diamonds-input" id="startingDiamondsInput" placeholder="Start 💎" min="0" max="1000" value="50">
+                <input type="text" id="teamNameInput" class="team-input" placeholder="Enter team name..." maxlength="20">
+                <input type="number" id="startingDiamondsInput" class="team-input diamonds-input" placeholder="Diamonds" min="0" max="999" value="0">
                 <button class="add-team-btn" onclick="addTeam()">Add Team</button>
             </div>
-            <div class="teams-grid" id="teamsGrid">
-                <!-- Teams will be generated here -->
-            </div>
+            <div class="teams-grid" id="teamsGrid"></div>
         </div>
 
         <div class="game-info">
-            <div class="current-team" id="currentTeam">Add teams and select one to start!</div>
-            <div style="color: #00f5ff; font-weight: bold;">Correct: +10💎 | Wrong: -5💎 | Overtime: -1💎/sec after 15s</div>
+            <div>Current Turn: <span class="current-team" id="currentTeam">Select a team first</span></div>
+            <div>Round: <span id="roundCounter">1</span></div>
         </div>
 
         <div class="message-area">
-            <div class="message" id="messageArea">Add your teams and start the treasure hunt!</div>
+            <div class="message" id="gameMessage">Welcome! Create teams and start your adventure!</div>
         </div>
 
-        <div class="game-board" id="gameBoard">
-            <!-- Treasure cards will be generated here -->
-        </div>
+        <div class="game-board" id="gameBoard"></div>
 
         <div class="leaderboard">
-            <h3>🏆 LEADERBOARD</h3>
-            <div id="leaderboardContent">
-                Add teams to see the leaderboard!
-            </div>
+            <h3>🏆 LEADERBOARD 🏆</h3>
+            <div id="leaderboardList"></div>
         </div>
     </div>
 
     <!-- Question Modal -->
     <div id="questionModal" class="modal">
         <div class="modal-content">
-            <div class="timer-container">
-                <div class="timer-display" id="timerDisplay">15</div>
-                <div class="timer-text">seconds</div>
-            </div>
             <span class="close" onclick="closeModal()">&times;</span>
+            <!-- Timer Container -->
+            <div class="timer-container" id="timerDisplay">15</div>
             <div class="question-text" id="questionText"></div>
             <div class="answer-options" id="answerOptions"></div>
         </div>
@@ -581,7 +570,57 @@
     </div>
 
     <script>
-        // Game data
+        // Game state
+        let teams = [];
+        let currentTeamIndex = 0;
+        let selectedCards = [];
+        let gameRound = 1;
+        let currentQuestionIndex = -1;
+        
+        // Timer variables
+        let questionTimer = null;
+        let timeLeft = 15;
+        let isOvertime = false;
+        let overtimeSeconds = 0;
+
+        // Sound creation functions
+        function createTickSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'square';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        function createOvertimeSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 600;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+
+        // Questions data
         const questions = [
             {
                 topic: "Mina's Hobby",
@@ -682,166 +721,51 @@
                 correct: 1
             }
         ];
-
-        // Game state
-        let teams = [];
-        let teamScores = {};
-        let selectedTeam = null;
-        let answeredCards = [];
-        let currentQuestion = null;
-        let timer = null;
-        let timeLeft = 15;
-        let questionStartTime = null;
-
-        // Audio context for sound effects
-        let audioContext;
-        
-        function initAudio() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-        }
-
-        function playSound(frequency, duration, type = 'sine') {
-            try {
-                initAudio();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-                oscillator.type = type;
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + duration);
-            } catch (e) {
-                console.log('Audio not supported');
-            }
-        }
-
-        function playCorrectSound() {
-            playSound(523, 0.2); // C
-            setTimeout(() => playSound(659, 0.2), 100); // E
-            setTimeout(() => playSound(784, 0.3), 200); // G
-        }
-
-        function playWrongSound() {
-            playSound(400, 0.3, 'sawtooth');
-            setTimeout(() => playSound(300, 0.4, 'sawtooth'), 150);
-        }
-
-        function playClickSound() {
-            playSound(800, 0.1);
-        }
-
-        function playWarningSound() {
-            playSound(1000, 0.1, 'square');
-        }
-
-        function playTimeoutSound() {
-            playSound(200, 0.5, 'sawtooth');
-        }
-
-        // Timer functions
-        function startTimer() {
-            timeLeft = 15;
-            questionStartTime = Date.now();
-            updateTimerDisplay();
-            
-            timer = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
-                
-                if (timeLeft <= 5 && timeLeft > 0) {
-                    playWarningSound();
-                }
-                
-                if (timeLeft <= 0) {
-                    handleTimeout();
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const timerDisplay = document.getElementById('timerDisplay');
-            timerDisplay.textContent = Math.max(0, timeLeft);
-            
-            if (timeLeft <= 5) {
-                timerDisplay.classList.add('warning');
-            } else {
-                timerDisplay.classList.remove('warning');
-            }
-        }
-
-        function stopTimer() {
-            if (timer) {
-                clearInterval(timer);
-                timer = null;
-            }
-        }
-
-        function handleTimeout() {
-            stopTimer();
-            const elapsedTime = Math.floor((Date.now() - questionStartTime) / 1000);
-            const extraTime = Math.max(0, elapsedTime - 15);
-            
-            // Deduct points for overtime
-            const timeoutPenalty = 5 + extraTime; // Base penalty + extra time penalty
-            teamScores[selectedTeam] = Math.max(0, teamScores[selectedTeam] - timeoutPenalty);
-            
-            closeModal();
-            showResultModal('timeout', `⏰ TIME'S UP!\n-${timeoutPenalty}💎 for ${selectedTeam}!\n(Base: -5💎, Overtime: -${extraTime}💎)`);
-            playTimeoutSound();
-            
-            updateTeamsDisplay();
-            updateLeaderboard();
-        }
-
-        // Initialize game
-        function initGame() {
-            createGameBoard();
-        }
-
+        // Add team function - แก้ไขให้รวมเพชรเริ่มต้น
         function addTeam() {
             const nameInput = document.getElementById('teamNameInput');
             const diamondsInput = document.getElementById('startingDiamondsInput');
             const teamName = nameInput.value.trim();
-            const startingDiamonds = parseInt(diamondsInput.value) || 50;
+            const startingDiamonds = parseInt(diamondsInput.value) || 0;
             
-            if (!teamName) {
+            if (teamName === '') {
                 showMessage('Please enter a team name!', 'error');
                 return;
             }
-            
-            if (teams.includes(teamName)) {
+
+            if (teams.some(team => team.name.toLowerCase() === teamName.toLowerCase())) {
                 showMessage('Team name already exists!', 'error');
                 return;
             }
-            
+
             if (teams.length >= 10) {
                 showMessage('Maximum 10 teams allowed!', 'error');
                 return;
             }
-            
-            if (startingDiamonds < 0 || startingDiamonds > 1000) {
-                showMessage('Starting diamonds must be between 0-1000!', 'error');
+
+            // เพิ่ม validation สำหรับเพชรเริ่มต้น
+            if (startingDiamonds < 0 || startingDiamonds > 999) {
+                showMessage('Starting diamonds must be between 0-999!', 'error');
                 return;
             }
-            
-            teams.push(teamName);
-            teamScores[teamName] = startingDiamonds;
+
+            teams.push({
+                name: teamName,
+                diamonds: startingDiamonds
+            });
+
             nameInput.value = '';
-            diamondsInput.value = 50;
-            
+            diamondsInput.value = '0';
             updateTeamsDisplay();
             updateLeaderboard();
-            showMessage(`Team "${teamName}" added with ${startingDiamonds}💎!`, 'success');
-            playClickSound();
+            
+            if (teams.length === 1) {
+                currentTeamIndex = 0;
+                updateCurrentTeamDisplay();
+                createGameBoard();
+            }
+            
+            showMessage(`Team "${teamName}" added with ${startingDiamonds} diamonds!`, 'success');
         }
 
         function updateTeamsDisplay() {
@@ -850,56 +774,108 @@
             
             teams.forEach((team, index) => {
                 const teamBtn = document.createElement('div');
-                teamBtn.className = 'team-btn';
-                if (selectedTeam === team) {
-                    teamBtn.classList.add('selected');
-                }
-                teamBtn.onclick = () => selectTeam(team, teamBtn);
+                teamBtn.className = `team-btn ${index === currentTeamIndex ? 'selected' : ''}`;
+                teamBtn.onclick = () => selectTeam(index);
                 teamBtn.innerHTML = `
-                    <div class="team-name">${team}</div>
-                    <div class="team-diamonds">💎 ${teamScores[team]}</div>
+                    <div class="team-name">${team.name}</div>
+                    <div class="team-diamonds">💎 ${team.diamonds}</div>
                 `;
                 teamsGrid.appendChild(teamBtn);
             });
         }
 
-        function selectTeam(team, btn) {
-            document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            selectedTeam = team;
-            document.getElementById('currentTeam').textContent = `Current Team: ${team} (💎${teamScores[team]})`;
-            showMessage(`Team ${team} selected! Click a treasure card to start!`, 'success');
-            playClickSound();
+        function selectTeam(index) {
+            if (teams.length === 0) return;
+            currentTeamIndex = index;
+            updateTeamsDisplay();
+            updateCurrentTeamDisplay();
+        }
+
+        function updateCurrentTeamDisplay() {
+            const currentTeamElement = document.getElementById('currentTeam');
+            if (teams.length > 0) {
+                currentTeamElement.textContent = teams[currentTeamIndex].name;
+            } else {
+                currentTeamElement.textContent = 'No teams created';
+            }
         }
 
         function createGameBoard() {
             const gameBoard = document.getElementById('gameBoard');
-            questions.forEach((question, index) => {
+            gameBoard.innerHTML = '';
+            
+            questions.forEach((q, index) => {
                 const card = document.createElement('div');
-                card.className = 'treasure-card';
+                card.className = `treasure-card ${selectedCards.includes(index) ? 'answered' : ''}`;
                 card.onclick = () => openQuestion(index);
                 card.innerHTML = `
                     <div class="card-number">${index + 1}</div>
-                    <div class="card-icon">${question.icon}</div>
-                    <div class="card-topic">${question.topic}</div>
+                    <div class="card-topic">${q.topic}</div>
+                    <div class="card-icon">${q.icon}</div>
                 `;
                 gameBoard.appendChild(card);
             });
         }
 
-        function openQuestion(cardIndex) {
-            if (!selectedTeam) {
-                showMessage('Please select a team first!', 'error');
+        // Timer functions
+        function startTimer() {
+            timeLeft = 15;
+            isOvertime = false;
+            overtimeSeconds = 0;
+            updateTimerDisplay();
+            
+            questionTimer = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    if (timeLeft <= 5 && timeLeft > 0) {
+                        createTickSound(); // เสียงเอฟเฟกต์ 5 วิสุดท้าย
+                    }
+                } else {
+                    // เข้าสู่ Overtime
+                    isOvertime = true;
+                    overtimeSeconds++;
+                    createOvertimeSound(); // เสียงเอฟเฟกต์เมื่อเกินเวลา
+                }
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (questionTimer) {
+                clearInterval(questionTimer);
+                questionTimer = null;
+            }
+        }
+
+        function updateTimerDisplay() {
+            const timerDisplay = document.getElementById('timerDisplay');
+            
+            if (!isOvertime) {
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 5) {
+                    timerDisplay.className = 'timer-container timer-danger';
+                } else {
+                    timerDisplay.className = 'timer-container';
+                }
+            } else {
+                timerDisplay.textContent = `+${overtimeSeconds}`;
+                timerDisplay.className = 'timer-container timer-overtime';
+            }
+        }
+
+        function openQuestion(questionIndex) {
+            if (teams.length === 0) {
+                showMessage('Please create at least one team first!', 'error');
                 return;
             }
 
-            if (answeredCards.includes(cardIndex)) {
+            if (selectedCards.includes(questionIndex)) {
                 showMessage('This question has already been answered!', 'error');
                 return;
             }
 
-            currentQuestion = cardIndex;
-            const question = questions[cardIndex];
+            currentQuestionIndex = questionIndex;
+            const question = questions[questionIndex];
             
             document.getElementById('questionText').textContent = question.question;
             
@@ -913,54 +889,85 @@
                 button.onclick = () => selectAnswer(index);
                 optionsContainer.appendChild(button);
             });
+            
             document.getElementById('questionModal').style.display = 'block';
-            startTimer();
-            playClickSound();
+            startTimer(); // เริ่มจับเวลา
         }
 
-        function selectAnswer(answerIndex) {
-            if (!currentQuestion !== null) return;
+        function selectAnswer(selectedIndex) {
+            stopTimer(); // หยุดจับเวลา
             
-            stopTimer();
-            const question = questions[currentQuestion];
-            const isCorrect = answerIndex === question.correct;
-            const elapsedTime = Math.floor((Date.now() - questionStartTime) / 1000);
-            const extraTime = Math.max(0, elapsedTime - 15);
+            const question = questions[currentQuestionIndex];
+            const isCorrect = selectedIndex === question.correct;
             
-            let pointsChange = 0;
-            let resultText = '';
-            let resultMessage = '';
+            // คำนวณเพชรที่ได้/เสีย
+            let diamondChange = 0;
+            let message = '';
             
             if (isCorrect) {
-                pointsChange = 10 - extraTime;
-                teamScores[selectedTeam] += pointsChange;
-                resultText = '✅ CORRECT!';
-                resultMessage = `+${pointsChange}💎 for ${selectedTeam}!`;
-                if (extraTime > 0) {
-                    resultMessage += `\n(Base: +10💎, Overtime: -${extraTime}💎)`;
+                diamondChange = 10; // รางวัลพื้นฐาน
+                
+                // ลดรางวัลหากใช้เวลาเกิน 15 วินาที
+                if (isOvertime) {
+                    diamondChange = Math.max(1, diamondChange - overtimeSeconds); // ลดวินาทีละ 1 แต่ไม่ต่ำกว่า 1
+                    message = `Correct! +${diamondChange} diamonds (${overtimeSeconds}s overtime penalty)`;
+                } else {
+                    // ลดรางวัลหากใช้เวลาเกิน (แต่ยังไม่เกิน 15 วิ)
+                    const usedTime = 15 - timeLeft;
+if (isCorrect) {
+                diamondChange = 10; // รางวัลพื้นฐาน
+                
+                // ลดรางวัลหากใช้เวลาเกิน 15 วินาที
+                if (isOvertime) {
+                    diamondChange = Math.max(1, diamondChange - overtimeSeconds); // ลดวินาทีละ 1 แต่ไม่ต่ำกว่า 1
+                    message = `Correct! +${diamondChange} diamonds (${overtimeSeconds}s overtime penalty)`;
+                } else {
+                    // ลดรางวัลหากใช้เวลาเกิน (แต่ยังไม่เกิน 15 วิ)
+                    const usedTime = 15 - timeLeft;
+                    if (usedTime > 10) {
+                        diamondChange = Math.max(5, diamondChange - (usedTime - 10)); // ลดรางวัลเมื่อใช้เวลานาน
+                        message = `Correct! +${diamondChange} diamonds (slow answer penalty)`;
+                    } else {
+                        message = `Correct! +${diamondChange} diamonds`;
+                    }
                 }
-                playCorrectSound();
+                teams[currentTeamIndex].diamonds += diamondChange;
             } else {
-                pointsChange = -5 - extraTime;
-                teamScores[selectedTeam] = Math.max(0, teamScores[selectedTeam] + pointsChange);
-                resultText = '❌ WRONG!';
-                resultMessage = `${pointsChange}💎 for ${selectedTeam}!`;
-                if (extraTime > 0) {
-                    resultMessage += `\n(Base: -5💎, Overtime: -${extraTime}💎)`;
-                }
-                playWrongSound();
+                diamondChange = -5; // เสียเพชร
+                message = `Wrong answer! ${diamondChange} diamonds`;
+                teams[currentTeamIndex].diamonds = Math.max(0, teams[currentTeamIndex].diamonds + diamondChange);
             }
             
-            answeredCards.push(currentQuestion);
-            document.querySelectorAll('.treasure-card')[currentQuestion].classList.add('answered');
-            
+            selectedCards.push(currentQuestionIndex);
             closeModal();
-            showResultModal(isCorrect ? 'correct' : 'wrong', `${resultText}\n${resultMessage}`);
             
-            updateTeamsDisplay();
-            updateLeaderboard();
+            // แสดงผลลัพธ์
+            showResult(isCorrect, message);
             
-            currentQuestion = null;
+            // อัพเดทการแสดงผล
+            setTimeout(() => {
+                updateTeamsDisplay();
+                updateLeaderboard();
+                createGameBoard();
+                nextTurn();
+            }, 2000);
+        }
+
+        function showResult(isCorrect, message) {
+            const resultModal = document.getElementById('resultModal');
+            const resultContent = document.getElementById('resultContent');
+            const resultText = document.getElementById('resultText');
+            const resultDetails = document.getElementById('resultDetails');
+            
+            resultText.textContent = isCorrect ? '🎉 CORRECT!' : '❌ WRONG!';
+            resultText.className = `result-text ${isCorrect ? 'result-correct' : 'result-wrong'}`;
+            resultDetails.textContent = message;
+            resultContent.className = `result-content ${isCorrect ? 'result-correct' : 'result-wrong'}`;
+            
+            resultModal.style.display = 'block';
+            setTimeout(() => {
+                resultModal.style.display = 'none';
+            }, 2000);
         }
 
         function closeModal() {
@@ -968,54 +975,46 @@
             document.getElementById('questionModal').style.display = 'none';
         }
 
-        function showResultModal(type, message) {
-            const modal = document.getElementById('resultModal');
-            const content = document.getElementById('resultContent');
-            const text = document.getElementById('resultText');
-            const details = document.getElementById('resultDetails');
+        function nextTurn() {
+            if (teams.length > 1) {
+                currentTeamIndex = (currentTeamIndex + 1) % teams.length;
+                if (currentTeamIndex === 0) {
+                    gameRound++;
+                    document.getElementById('roundCounter').textContent = gameRound;
+                }
+                updateCurrentTeamDisplay();
+                updateTeamsDisplay();
+            }
             
-            content.className = `result-content result-${type}`;
-            text.textContent = message.split('\n')[0];
-            details.textContent = message.split('\n').slice(1).join('\n');
-            
-            modal.style.display = 'block';
-            
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 3000);
-        }
-
-        function showMessage(message, type) {
-            const messageArea = document.getElementById('messageArea');
-            messageArea.innerHTML = `<div class="message ${type}">${message}</div>`;
-            
-            setTimeout(() => {
-                messageArea.innerHTML = '<div class="message">Click a treasure card to answer questions!</div>';
-            }, 3000);
+            // ตรวจสอบว่าเกมจบหรือยัง
+            if (selectedCards.length === questions.length) {
+                setTimeout(() => {
+                    showMessage('🏆 Game Complete! Check the final leaderboard! 🏆', 'success');
+                }, 500);
+            } else {
+                showMessage(`It's ${teams[currentTeamIndex].name}'s turn!`, 'success');
+            }
         }
 
         function updateLeaderboard() {
-            const leaderboardContent = document.getElementById('leaderboardContent');
+            const leaderboardList = document.getElementById('leaderboardList');
+            const sortedTeams = [...teams].sort((a, b) => b.diamonds - a.diamonds);
             
-            if (teams.length === 0) {
-                leaderboardContent.innerHTML = 'Add teams to see the leaderboard!';
-                return;
-            }
-            
-            const sortedTeams = teams.sort((a, b) => teamScores[b] - teamScores[a]);
-            
-            let leaderboardHTML = '';
-            sortedTeams.forEach((team, index) => {
+            leaderboardList.innerHTML = sortedTeams.map((team, index) => {
                 const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏅';
-                leaderboardHTML += `
+                return `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; margin: 5px 0; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                        <span>${medal} ${team}</span>
-                        <span style="color: #00f5ff; font-weight: bold;">💎 ${teamScores[team]}</span>
+                        <span>${medal} ${team.name}</span>
+                        <span style="color: #00f5ff; font-weight: bold;">💎 ${team.diamonds}</span>
                     </div>
                 `;
-            });
-            
-            leaderboardContent.innerHTML = leaderboardHTML;
+            }).join('');
+        }
+
+        function showMessage(text, type = '') {
+            const messageElement = document.getElementById('gameMessage');
+            messageElement.textContent = text;
+            messageElement.className = `message ${type}`;
         }
 
         // Event listeners
@@ -1034,13 +1033,18 @@
         // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('questionModal');
+            const resultModal = document.getElementById('resultModal');
             if (event.target === modal) {
                 closeModal();
             }
+            if (event.target === resultModal) {
+                resultModal.style.display = 'none';
+            }
         }
 
-        // Initialize the game
-        initGame();
+        // Initialize game
+        updateCurrentTeamDisplay();
+        showMessage('Welcome! Create teams and start your adventure!', 'success');
     </script>
 </body>
 </html>
