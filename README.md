@@ -78,9 +78,10 @@
             margin-bottom: 15px;
             align-items: center;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
-        .team-input {
+        .team-input, .diamonds-input {
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid #8338ec;
             border-radius: 10px;
@@ -91,11 +92,15 @@
             width: 200px;
         }
 
-        .team-input::placeholder {
+        .diamonds-input {
+            width: 120px;
+        }
+
+        .team-input::placeholder, .diamonds-input::placeholder {
             color: #aaa;
         }
 
-        .team-input:focus {
+        .team-input:focus, .diamonds-input:focus {
             border-color: #00f5ff;
             box-shadow: 0 0 20px rgba(0, 245, 255, 0.5);
         }
@@ -281,6 +286,48 @@
             font-size: 1.3rem;
         }
 
+        /* Timer Styles */
+        .timer-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .timer {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #00f5ff;
+            text-shadow: 0 0 20px #00f5ff;
+            background: rgba(0, 245, 255, 0.1);
+            border: 3px solid #00f5ff;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: timerPulse 1s ease-in-out infinite;
+        }
+
+        .timer.warning {
+            color: #ff0040;
+            text-shadow: 0 0 20px #ff0040;
+            border-color: #ff0040;
+            background: rgba(255, 0, 64, 0.1);
+            animation: timerWarning 0.5s ease-in-out infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes timerWarning {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px #ff0040; }
+            50% { transform: scale(1.1); box-shadow: 0 0 40px #ff0040; }
+        }
+
         /* Modal Styles */
         .modal {
             display: none;
@@ -305,6 +352,7 @@
             text-align: center;
             box-shadow: 0 0 50px rgba(0, 245, 255, 0.5);
             animation: modalSlideIn 0.3s ease-out;
+            position: relative;
         }
 
         @keyframes modalSlideIn {
@@ -322,7 +370,7 @@
             font-size: 1.4rem;
             color: #00f5ff;
             text-shadow: 0 0 15px #00f5ff;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-weight: bold;
         }
 
@@ -411,6 +459,11 @@
             background: radial-gradient(circle, rgba(255, 0, 64, 0.2) 0%, transparent 70%);
         }
 
+        .result-timeout {
+            color: #ff8c00;
+            background: radial-gradient(circle, rgba(255, 140, 0, 0.2) 0%, transparent 70%);
+        }
+
         @keyframes resultPulse {
             0% { transform: scale(0.5); opacity: 0; }
             50% { transform: scale(1.2); }
@@ -445,7 +498,7 @@
             .team-input-section {
                 flex-direction: column;
             }
-            .team-input {
+            .team-input, .diamonds-input {
                 width: 100%;
             }
             .modal-content {
@@ -461,6 +514,11 @@
             }
             .result-content {
                 min-width: 300px;
+            }
+            .timer {
+                width: 80px;
+                height: 80px;
+                font-size: 2rem;
             }
         }
     </style>
@@ -478,6 +536,7 @@
             <h3 style="text-align: center; margin-bottom: 15px; color: #00f5ff; text-shadow: 0 0 10px #00f5ff;">Create & Select Teams</h3>
             <div class="team-input-section">
                 <input type="text" class="team-input" id="teamNameInput" placeholder="Enter team name..." maxlength="20">
+                <input type="number" class="diamonds-input" id="startingDiamonds" placeholder="Starting 💎" min="0" max="1000" value="50">
                 <button class="add-team-btn" onclick="addTeam()">Add Team</button>
             </div>
             <div class="teams-grid" id="teamsGrid">
@@ -487,7 +546,7 @@
 
         <div class="game-info">
             <div class="current-team" id="currentTeam">Add teams and select one to start!</div>
-            <div style="color: #00f5ff; font-weight: bold;">Correct: +10💎 | Wrong: -5💎</div>
+            <div style="color: #00f5ff; font-weight: bold;">Correct: +10💎 | Wrong: -5💎 | Overtime: -1💎/sec</div>
         </div>
 
         <div class="message-area">
@@ -510,6 +569,9 @@
     <div id="questionModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
+            <div class="timer-container">
+                <div class="timer" id="timer">20</div>
+            </div>
             <div class="question-text" id="questionText"></div>
             <div class="answer-options" id="answerOptions"></div>
         </div>
@@ -632,6 +694,9 @@
         let selectedTeam = null;
         let answeredCards = [];
         let currentQuestion = null;
+        let timer = null;
+        let timeLeft = 20;
+        let isAnswered = false;
 
         // Audio context for sound effects
         let audioContext;
@@ -673,6 +738,16 @@
             setTimeout(() => playSound(300, 0.4, 'sawtooth'), 150);
         }
 
+        function playWarningSound() {
+            // Play warning beep
+            playSound(1000, 0.1, 'square');
+        }
+
+        function playTimeoutSound() {
+            // Play timeout sound
+            playSound(200, 0.8, 'sawtooth');
+        }
+
         function playClickSound() {
             playSound(800, 0.1);
         }
@@ -683,8 +758,10 @@
         }
 
         function addTeam() {
-            const input = document.getElementById('teamNameInput');
-            const teamName = input.value.trim();
+            const nameInput = document.getElementById('teamNameInput');
+            const diamondsInput = document.getElementById('startingDiamonds');
+            const teamName = nameInput.value.trim();
+            const startingDiamonds = parseInt(diamondsInput.value) || 50;
             
             if (!teamName) {
                 showMessage('Please enter a team name!', 'error');
@@ -700,14 +777,20 @@
                 showMessage('Maximum 10 teams allowed!', 'error');
                 return;
             }
+
+            if (startingDiamonds < 0 || startingDiamonds > 1000) {
+                showMessage('Starting diamonds must be between 0-1000!', 'error');
+                return;
+            }
             
             teams.push(teamName);
-            teamScores[teamName] = 0;
-            input.value = '';
+            teamScores[teamName] = startingDiamonds;
+            nameInput.value = '';
+            diamondsInput.value = 50;
             
             updateTeamsDisplay();
             updateLeaderboard();
-            showMessage(`Team "${teamName}" added!`, 'success');
+            showMessage(`Team "${teamName}" added with ${startingDiamonds} diamonds!`, 'success');
             playClickSound();
         }
 
@@ -718,6 +801,9 @@
             teams.forEach((team, index) => {
                 const teamBtn = document.createElement('div');
                 teamBtn.className = 'team-btn';
+                if (selectedTeam === team) {
+                    teamBtn.classList.add('selected');
+                }
                 teamBtn.onclick = () => selectTeam(team, teamBtn);
                 teamBtn.innerHTML = `
                     <div class="team-name">${team}</div>
@@ -731,7 +817,7 @@
             document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             selectedTeam = team;
-            document.getElementById('currentTeam').textContent = `Current Team: ${team}`;
+            document.getElementById('currentTeam').textContent = `Current Team: ${team} (💎 ${teamScores[team]})`;
             showMessage(`Team ${team} selected! Click a treasure card to start!`, 'success');
             playClickSound();
         }
@@ -763,6 +849,9 @@
             }
 
             currentQuestion = cardIndex;
+            isAnswered = false;
+            timeLeft = 20;
+            
             const question = questions[cardIndex];
             
             document.getElementById('questionText').textContent = question.question;
@@ -779,119 +868,184 @@
             });
             
             document.getElementById('questionModal').style.display = 'block';
+            startTimer();
             playClickSound();
         }
 
-        function selectAnswer(selectedIndex) {
-            const question = questions[currentQuestion];
-            const isCorrect = selectedIndex === question.correct;
+        function startTimer() {
+            const timerElement = document.getElementById('timer');
+            timerElement.textContent = timeLeft;
+            timerElement.classList.remove('warning');
             
-            closeModal();
+            timer = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                
+                // Warning state for last 5 seconds
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    timerElement.classList.add('warning');
+                    playWarningSound();
+                }
+                
+                // Time's up
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    if (!isAnswered) {
+                        handleTimeout();
+                    }
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+        }
+
+        function handleTimeout() {
+            isAnswered = true;
+            const overtimePenalty = 20 - timeLeft; // Seconds over time
+            teamScores[selectedTeam] = Math.max(0, teamScores[selectedTeam] - overtimePenalty);
+            answeredCards.push(currentQuestion);
+            markCardAsAnswered(currentQuestion);
+            
+            showResultModal('TIMEOUT!', 'timeout', `Time's up! Lost ${overtimePenalty} diamonds for overtime.`);
+            playTimeoutSound();
+            
+            setTimeout(() => {
+                closeModal();
+                hideResultModal();
+                updateTeamsDisplay();
+                updateLeaderboard();
+            }, 3000);
+        }
+
+        function selectAnswer(answerIndex) {
+            if (isAnswered) return;
+            
+            isAnswered = true;
+            stopTimer();
+            
+            const question = questions[currentQuestion];
+            const isCorrect = answerIndex === question.correct;
             
             if (isCorrect) {
                 teamScores[selectedTeam] += 10;
                 answeredCards.push(currentQuestion);
-                
-                // Mark card as answered
-                const cards = document.querySelectorAll('.treasure-card');
-                cards[currentQuestion].classList.add('answered');
-                
-                showResultModal(true, `+10 diamonds for ${selectedTeam}!`);
+                markCardAsAnswered(currentQuestion);
+                showResultModal('CORRECT!', 'correct', '+10 Diamonds! Well done!');
                 playCorrectSound();
-                
-                // Check if game is complete
-                if (answeredCards.length === questions.length) {
-                    setTimeout(() => {
-                        showMessage('🎉 GAME COMPLETE! All questions answered! 🎉', 'success');
-                        celebrateWin();
-                    }, 3000);
-                }
-                
             } else {
                 teamScores[selectedTeam] = Math.max(0, teamScores[selectedTeam] - 5);
-                const correctAnswer = question.options[question.correct];
-                showResultModal(false, `-5 diamonds for ${selectedTeam}!\nCorrect answer: ${correctAnswer}`);
+                showResultModal('WRONG!', 'wrong', `-5 Diamonds! The correct answer was: ${question.options[question.correct]}`);
                 playWrongSound();
             }
-
-            updateTeamsDisplay();
-            updateLeaderboard();
-        }
-
-        function showResultModal(isCorrect, details) {
-            const resultModal = document.getElementById('resultModal');
-            const resultContent = document.getElementById('resultContent');
-            const resultText = document.getElementById('resultText');
-            const resultDetails = document.getElementById('resultDetails');
-            
-            if (isCorrect) {
-                resultText.textContent = '✅ CORRECT!';
-                resultContent.className = 'result-content result-correct';
-            } else {
-                resultText.textContent = '❌ WRONG!';
-                resultContent.className = 'result-content result-wrong';
-            }
-            
-            resultDetails.textContent = details;
-            resultModal.style.display = 'block';
             
             setTimeout(() => {
-                resultModal.style.display = 'none';
+                closeModal();
+                hideResultModal();
+                updateTeamsDisplay();
+                updateLeaderboard();
             }, 3000);
+        }
+
+        function showResultModal(text, type, details) {
+            const resultModal = document.getElementById('resultModal');
+            const resultText = document.getElementById('resultText');
+            const resultDetails = document.getElementById('resultDetails');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultText.textContent = text;
+            resultDetails.textContent = details;
+            
+            // Reset classes
+            resultContent.className = 'result-content';
+            resultText.className = 'result-text';
+            
+            // Add appropriate class
+            resultContent.classList.add(`result-${type}`);
+            resultText.classList.add(`result-${type}`);
+            
+            resultModal.style.display = 'block';
+        }
+
+        function hideResultModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        function markCardAsAnswered(cardIndex) {
+            const cards = document.querySelectorAll('.treasure-card');
+            if (cards[cardIndex]) {
+                cards[cardIndex].classList.add('answered');
+            }
         }
 
         function closeModal() {
             document.getElementById('questionModal').style.display = 'none';
+            stopTimer();
         }
 
         function updateLeaderboard() {
-            const leaderboard = document.getElementById('leaderboardContent');
+            const leaderboardContent = document.getElementById('leaderboardContent');
             
             if (teams.length === 0) {
-                leaderboard.innerHTML = 'Add teams to see the leaderboard!';
+                leaderboardContent.innerHTML = 'Add teams to see the leaderboard!';
                 return;
             }
             
-            const sortedTeams = Object.entries(teamScores)
-                .sort(([,a], [,b]) => b - a);
-
-            leaderboard.innerHTML = sortedTeams.map(([team, score], index) => `
-                <div style="display: flex; justify-content: space-between; margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                    <span style="color: ${index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : '#00f5ff'};">
-                        ${index + 1}. ${team}
-                    </span>
-                    <span style="color: #00f5ff;">💎 ${score}</span>
-                </div>
-            `).join('');
+            const sortedTeams = teams
+                .map(team => ({ name: team, score: teamScores[team] }))
+                .sort((a, b) => b.score - a.score);
+            
+            leaderboardContent.innerHTML = sortedTeams
+                .map((team, index) => {
+                    const position = index + 1;
+                    const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : '🏅';
+                    return `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: rgba(255,255,255,0.05); margin: 5px 0; border-radius: 8px; border-left: 3px solid ${position === 1 ? '#FFD700' : position === 2 ? '#C0C0C0' : position === 3 ? '#CD7F32' : '#8338ec'};">
+                        <span>${medal} ${position}. ${team.name}</span>
+                        <span style="color: #00f5ff; font-weight: bold;">💎 ${team.score}</span>
+                    </div>`;
+                })
+                .join('');
         }
 
-        function showMessage(message, type = '') {
+        function showMessage(message, type) {
             const messageArea = document.getElementById('messageArea');
-            messageArea.textContent = message;
-            messageArea.className = `message ${type}`;
+            messageArea.innerHTML = `<div class="message ${type}">${message}</div>`;
             
             setTimeout(() => {
-                if (teams.length > 0) {
-                    messageArea.textContent = 'Select a team and click a treasure card to continue...';
-                } else {
-                    messageArea.textContent = 'Add your teams and start the treasure hunt!';
-                }
-                messageArea.className = 'message';
+                messageArea.innerHTML = '<div class="message">Choose a treasure card to continue your adventure!</div>';
             }, 3000);
         }
 
-        function celebrateWin() {
-            document.body.style.animation = 'pulse 0.5s ease-in-out infinite alternate';
+        // Handle Enter key for team input
+        document.addEventListener('DOMContentLoaded', function() {
+            const teamNameInput = document.getElementById('teamNameInput');
+            const diamondsInput = document.getElementById('startingDiamonds');
             
-            // Play celebration sound
-            for (let i = 0; i < 5; i++) {
-                setTimeout(() => playCorrectSound(), i * 200);
-            }
+            teamNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addTeam();
+                }
+            });
             
-            setTimeout(() => {
-                document.body.style.animation = '';
-            }, 5000);
-        }
+            diamondsInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addTeam();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keypress', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+            
+            initGame();
+        });
 
         // Close modal when clicking outside
         window.onclick = function(event) {
@@ -900,16 +1054,3 @@
                 closeModal();
             }
         }
-
-        // Allow Enter key to add team
-        document.getElementById('teamNameInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addTeam();
-            }
-        });
-
-        // Initialize the game
-        initGame();
-    </script>
-</body>
-</html>
