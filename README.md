@@ -914,16 +914,6 @@
                 } else {
                     // ลดรางวัลหากใช้เวลาเกิน (แต่ยังไม่เกิน 15 วิ)
                     const usedTime = 15 - timeLeft;
-if (isCorrect) {
-                diamondChange = 10; // รางวัลพื้นฐาน
-                
-                // ลดรางวัลหากใช้เวลาเกิน 15 วินาที
-                if (isOvertime) {
-                    diamondChange = Math.max(1, diamondChange - overtimeSeconds); // ลดวินาทีละ 1 แต่ไม่ต่ำกว่า 1
-                    message = `Correct! +${diamondChange} diamonds (${overtimeSeconds}s overtime penalty)`;
-                } else {
-                    // ลดรางวัลหากใช้เวลาเกิน (แต่ยังไม่เกิน 15 วิ)
-                    const usedTime = 15 - timeLeft;
                     if (usedTime > 10) {
                         diamondChange = Math.max(5, diamondChange - (usedTime - 10)); // ลดรางวัลเมื่อใช้เวลานาน
                         message = `Correct! +${diamondChange} diamonds (slow answer penalty)`;
